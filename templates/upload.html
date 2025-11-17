@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Media Server – Upload</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet.css') }}">
+</head>
+
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+
+      <h1>Upload Files</h1>
+
+      <p>
+        upload files to media directory
+        <br><br>
+        accepted filetypes: {{ allowed_extensions }}
+      </p>
+
+      {% if msg %}
+        <div class="{% if 'successfully' in msg %}success{% else %}error{% endif %}">
+          {{ msg }}
+        </div>
+      {% endif %}
+
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit" class="btn primary full">upload</button>
+      </form>
+
+      <button type="button" class="btn primary full" onclick="window.location.href='{{ url_for('index') }}'">
+        back
+      </button>
+
+    </div>
+  </div>
+</body>
+</html>

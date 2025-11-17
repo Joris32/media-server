@@ -1,0 +1,10 @@
+*.swp
+.env
+.ipynb_checkpoints/
+__pycache__/
+instance/
+logs/
+media/
+mkv_to_mp4.ipynb
+renaming.ipynb
+todo.txt

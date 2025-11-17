@@ -1,0 +1,372 @@
+:root {
+  --bg: #05070d;
+  --bg-end: #0a0f1a;
+  --card: #0d1320;
+  --card-hover: #131b2e;
+  --muted: #9ca3af;
+  --accent: #38bdf8;
+  --accent-2: #60a5fa;
+  --success: #34d399;
+  --glass: rgba(255,255,255,0.03);
+  --max-width: 1100px;
+  --radius: 12px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* --- BASE LAYOUT --- */
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-end) 100%) fixed; 
+  background-size: cover;
+  color: #e6eef8;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 40px auto;
+  padding: 0 32px 48px;
+  box-sizing: border-box;
+}
+
+/* --- TOP BAR (login/logout) --- */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 10px;
+  color: var(--muted);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.user-info .username {
+  color: #e6eef8;
+  font-weight: 500;
+}
+
+/* --- HEADER (title) --- */
+.main-header {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.main-header h1 {
+  margin: 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* --- CONTROL BAR (filters) --- */
+.control-bar {
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 26px;
+  margin-right:30px;
+}
+
+.btn {
+  background: var(--glass);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn:hover {
+  background: rgba(255,255,255,0.05);
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #041018;
+  border: none;
+  box-shadow: 0 6px 18px rgba(14,165,233,0.1);
+}
+
+.btn.ghost {
+  background: none;
+  border: none;
+}
+
+.btn.small {
+  padding: 6px 10px;
+  font-size: 13px;
+  background: none;
+  border: none;
+}
+
+/* --- PANELS --- */
+.panel {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 240px 1fr;
+}
+
+.panel:not(:has(.folders)) {
+  grid-template-columns: 1fr;
+}
+
+/* --- SIDEBAR (folders) --- */
+.folders {
+  background: rgba(255,255,255,0.02);
+  padding: 14px;
+  border-radius: var(--radius);
+  min-height: 120px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.folders h3 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.folders ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.folders a {
+  color: inherit;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 8px;
+  display: block;
+  transition: background 0.15s ease;
+}
+
+.folders a:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+/* --- ITEMS GRID --- */
+.items {
+  background: rgba(255,255,255,0.02);
+  padding: 14px;
+  border-radius: var(--radius);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* --- MOVIE CARDS --- */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  background: var(--card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+}
+
+.card .meta {
+  flex: 1;
+  overflow: hidden;
+}
+
+.card a {
+  color: #f1f5f9;
+  text-decoration: none;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.subtle {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.card.watched {
+  opacity: 0.6;
+  filter: grayscale(0.3);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.card.watched:hover {
+  opacity: 0.8;
+  filter: grayscale(0);
+}
+
+
+/* --- WATCH STATUS BUTTONS --- */
+.watch-status {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.watch-status.unwatched {
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.25), rgba(56, 189, 248, 0.25));
+  color: #93c5fd;
+}
+
+.watch-status.watched {
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+}
+
+.watch-status:hover {
+  transform: scale(1.05);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 800px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
+  .folders {
+    order: -1;
+    margin-bottom: 20px;
+  }
+
+  .control-bar {
+    flex-direction: column;
+  }
+
+  .top-bar {
+    justify-content: center;
+  }
+}
+
+/* --- ACCESSIBILITY --- */
+a:focus, button:focus {
+  outline: 3px solid rgba(56,189,248,0.18);
+  outline-offset: 3px;
+}
+
+.muted-inline {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* --- LOGIN PAGE --- */
+.login-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-end) 100%) fixed;
+}
+
+.login-card {
+  background: var(--card);
+  padding: 30px 50px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  color: #f1f5f9;
+}
+
+.login-card h1 {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+.login-card h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-card input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #e6eef8;
+  font-size: 15px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255,255,255,0.1);
+}
+
+.login-card .btn.full {
+  font-family: "Courier New", Courier, monospace;
+  width: 100%;
+  margin: 20px auto 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: block;
+}
+
+.error {
+  background: rgba(239,68,68,0.1);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.2);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.success {
+  background: rgba(34,197,94,0.1);
+  color: #4ade80;
+  border: 1px solid rgba(34,197,94,0.2);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+

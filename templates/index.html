@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Media Server</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheet.css') }}">
+    <script>
+        async function toggleWatched(media_id, btn) {
+          try {
+            const response = await fetch("/toggle_watched", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ media_id: media_id })
+            });
+            const result = await response.json();
+        
+            if (result.watched) {
+              btn.classList.add("watched");
+              btn.classList.remove("unwatched");
+              btn.textContent = "x";
+            } else {
+              btn.classList.add("unwatched");
+              btn.classList.remove("watched");
+              btn.textContent = " ";
+            }
+
+            const card = btn.closest(".card");
+            if (card) {
+              if (result.watched) {
+                card.classList.add("watched");
+              } else {
+                card.classList.remove("watched");
+              }
+            }
+              
+          } catch (err) {
+            console.error("Failed to update watch status:", err);
+          }
+        }
+        function toggleUnwatched(){
+            let url = new URL(window.location.href);
+            let params = new URLSearchParams(url.search);
+            if(params.get('unwatched') === 'true'){ params.delete('unwatched'); } else { params.set('unwatched','true'); }
+            window.location.search = params.toString();
+        }
+        function toggleMP4() {
+            let url = new URL(window.location.href);
+            let params = new URLSearchParams(url.search);
+            if (params.get('mp4_only') === 'true') {
+                params.delete('mp4_only');
+            } else {
+                params.set('mp4_only', 'true');
+            }
+            window.location.search = params.toString();
+        }
+    </script>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- top bar: user/login -->
+    <div class="top-bar">
+      {% if user %}
+        <div class="user-info">
+          <span class="username">logged in as: {{ user.username }}</span>
+          <a href="{{ url_for('logout') }}" class="btn ghost small">Logout</a>
+        </div>
+      {% else %}
+        <a href="/login" class="btn small">Log in / Sign up</a>
+      {% endif %}
+      {% if user and user.is_admin %}
+        <a href="/upload" class="btn small">Upload</a>
+      {% endif %}
+    </div>
+
+    <!-- main title -->
+    <header class="main-header">
+      {% if subpath %}
+        <h1>{{ subpath }}</h1>
+      {% else %}
+        <h1>Media Server</h1>
+      {% endif %}
+      {% if subpath %}
+        <a class="btn ghost" href="{{ url_for('index', subpath=parent_path) }}">⬅ Back</a>
+      {% endif %}
+    </header>
+
+    <!-- control bar -->
+    <nav class="control-bar">
+      <div class="filter-options">
+        {% if user %}
+        <label class="filter-checkbox">
+          <input type="checkbox" id="unwatchedToggle" {% if show_unwatched %}checked{% endif %} onchange="toggleUnwatched()">
+          Show unwatched only
+        </label>
+        {% endif %}
+          
+        <label class="filter-checkbox">
+          <input type="checkbox" id="mp4Toggle" {% if show_mp4_only %}checked{% endif %} onchange="toggleMP4()">
+          Show MP4 only
+        </label>
+      </div>
+    </nav>
+
+    <!-- main content -->
+    <main class="panel">
+      {% if folders %}
+      <aside class="folders" aria-label="Folders">
+        <h3>Folders</h3>
+        <ul>
+          {% for folder in folders %}
+            <li><a href="{{ url_for('index', subpath=subpath + '/' + folder if subpath else folder) }}">{{ folder }}</a></li>
+          {% endfor %}
+        </ul>
+      </aside>
+      {% endif %}
+
+      <section class="items" aria-live="polite">
+        <div class="grid">
+          {% for media in media_list %}
+          <article class="card {% if media in watched_media %}watched{% endif %}">
+            {% if user %}
+            <button
+              class="watch-status {% if media in watched_media %}watched{% else %}unwatched{% endif %}"
+              data-watched="{% if media in watched_media %}true{% else %}false{% endif %}"
+              aria-pressed="{% if media in watched_media %}true{% else %}false{% endif %}"
+              title="Toggle watched"
+              onclick="toggleWatched('{{ media.media_id }}', this)">
+              {% if media in watched_media %}x{% else %} {% endif %}
+            </button>
+            {% endif %}
+
+            <div class="meta">
+              <a href="{{ url_for('play', subpath=subpath + '/' + media.filename if subpath else media.filename) }}">{{ media.filename }}</a>
+              <div class="subtle">{{ 'Subtitles available' if media.has_subtitles else '' }}</div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>
