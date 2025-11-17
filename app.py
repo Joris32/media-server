@@ -162,16 +162,19 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        ip = request.remote_addr
-        print(f"login attempt; username '{username}', ip '{ip}'")
+        if LOG_LOGIN_ATTEMPTS:
+            ip = request.remote_addr
+            print(f"login attempt; username '{username}', ip '{ip}'")
 
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             session["username"] = username
-            print(f"login succesful; username '{username}', ip '{ip}'")
+            if LOG_LOGIN_ATTEMPTS:
+                print(f"login succesful; username '{username}', ip '{ip}'")
             return redirect(url_for("index"))
         else:
-            print(f"login failed; username '{username}', ip '{ip}'")
+            if LOG_LOGIN_ATTEMPTS:
+                print(f"login failed; username '{username}', ip '{ip}'")
             return render_template("login.html", error="Invalid credentials")
     return render_template("login.html")
 
@@ -186,9 +189,10 @@ def signup():
         username = request.form.get('username').strip()
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
-        
-        ip = request.remote_addr
-        print(f"signup attempt; username '{username}', ip '{ip}'")
+
+        if LOG_LOGIN_ATTEMPTS:
+            ip = request.remote_addr
+            print(f"signup attempt; username '{username}', ip '{ip}'")
 
         if not username or not password or not confirm_password:
             return render_template("signup.html", error = "All fields required")
