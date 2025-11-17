@@ -21,7 +21,8 @@ admin_pass = os.getenv("ADMIN_PASSWORD")
 MEDIA_DIR = os.getenv("MEDIA_DIR", os.path.join(os.getcwd(), "media"))
 
 IP = os.getenv("TAILSCALE_IP", "127.0.0.1")
-PORT = 8000
+WSGI_PORT = 8000 # port used when running wsgi_launcher.py
+DEV_PORT = 8080 # port used when running app.py directly
 
 ACCESS_LOGFILE = "logs/access.log"
 ERROR_LOGFILE = "logs/stderr.log" # print in statements in app.py will end up here (gunicorn --capture-output is enabled)
@@ -293,4 +294,4 @@ def media(subpath):
     
 
 if __name__ == '__main__':
-    app.run(host=IP, port=PORT, debug=True)
+    app.run(host=IP, port=DEV_PORT, debug=True)
