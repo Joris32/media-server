@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 host = app.IP
-port = app.PORT
+port = app.WSGI_PORT
 access_logfile = app.ACCESS_LOGFILE
 error_logfile = app.ERROR_LOGFILE
 

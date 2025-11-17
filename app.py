@@ -25,14 +25,14 @@ WSGI_PORT = 8000 # port used when running wsgi_launcher.py
 DEV_PORT = 8080 # port used when running app.py directly
 
 ACCESS_LOGFILE = "logs/access.log"
-ERROR_LOGFILE = "logs/stderr.log" # print in statements in app.py will end up here (gunicorn --capture-output is enabled)
+ERROR_LOGFILE = "logs/stderr.log" # print statements in app.py will end up here if gunicorn --capture-output is enabled
 
 LOG_LOGIN_ATTEMPTS = True
 
 VIDEO_EXT = {".mp4", ".mkv"}
 BOOK_EXT = {".epub"}
 SUBTITLE_EXT = {".srt", ".vtt"}
-ALLOWED_EXTENSIONS = VIDEO_EXT | BOOK_EXT | SUBTITLE_EXT
+ALLOWED_EXTENSIONS = VIDEO_EXT | BOOK_EXT | SUBTITLE_EXT # for file uploading via /upload
 
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
@@ -67,7 +67,7 @@ class Media(db.Model):
     is_book = db.Column(db.Boolean, default=False, nullable=False)
     has_subtitles = db.Column(db.Boolean, default=False, nullable=False)
     
-    viewers = db.relationship( # people who have marked piece of media as watched
+    viewers = db.relationship( # people who have marked piece of media as watched (for search filtering)
         'User',
         secondary=user_watched,
         back_populates='watched_media'
@@ -102,6 +102,7 @@ def user_is_admin():
 @app.route('/<path:subpath>')
 def index(subpath):
 
+    # search filters
     show_mp4_only = request.args.get('mp4_only') == 'true'
     show_unwatched = request.args.get('unwatched', 'false') == 'true'
     
@@ -110,15 +111,18 @@ def index(subpath):
     if not os.path.exists(current_path):
         return "Folder not found", 404
 
+    # collect all filenames/folders in current subdirectory
     items = sorted(os.listdir(current_path), key = lambda x: x.upper())
     folders = [item for item in items if os.path.isdir(os.path.join(current_path, item)) and not item.startswith(".")]
-
     media_filenames = [item for item in items if item.endswith(tuple(VIDEO_EXT | BOOK_EXT))]
-    
-    media_list = []
+
+    # collect/create media objects for each media filename in current subdirectory
+    media_list = [] 
     new_media = False
     for filename in media_filenames:
         media = Media.query.filter_by(filename=filename).first()
+
+        # create object if it doesn't exist
         if not media:
             new_media = True
             is_video = filename.endswith(tuple(VIDEO_EXT))
@@ -130,11 +134,13 @@ def index(subpath):
                 has_subtitles = False
 
             media = Media(filename=filename, is_video=is_video, is_book=is_book, has_subtitles=has_subtitles)
-            db.session.add(media)
+            db.session.add(media) # add new object to database
         media_list.append(media)
+        
     if new_media:
         db.session.commit()
 
+    # applying search filters
     user = get_user()
     if user:
         watched_media = [media for media in user.watched_media]
