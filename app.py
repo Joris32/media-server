@@ -114,30 +114,49 @@ def index(subpath):
     # collect all filenames/folders in current subdirectory
     items = sorted(os.listdir(current_path), key = lambda x: x.upper())
     folders = [item for item in items if os.path.isdir(os.path.join(current_path, item)) and not item.startswith(".")]
+    
     media_filenames = [item for item in items if item.endswith(tuple(VIDEO_EXT | BOOK_EXT))]
+    
+    subtitle_filenames = [item for item in items if item.endswith(tuple(SUBTITLE_EXT))]
+    subtitle_basenames = [os.path.splitext(f)[0] for f in subtitle_filenames]
 
     # collect/create media objects for each media filename in current subdirectory
     media_list = [] 
-    new_media = False
+    db_updated = False
     for filename in media_filenames:
         media = Media.query.filter_by(filename=filename).first()
 
         # create object if it doesn't exist
         if not media:
-            new_media = True
             is_video = filename.endswith(tuple(VIDEO_EXT))
             is_book = filename.endswith(tuple(BOOK_EXT))
             
             if is_video:
-                has_subtitles = any(os.path.exists(os.path.join(current_path, os.path.splitext(filename)[0] + ext )) for ext in SUBTITLE_EXT) or filename.endswith(".mkv") # heuristic, most .mkv files have subtitles 
+                basename = os.path.splitext(filename)[0]
+                has_subtitles = any(basename == stb for stb in subtitle_basenames) or filename.endswith(".mkv") # heuristic, most .mkv files have subtitles 
             else:
                 has_subtitles = False
 
             media = Media(filename=filename, is_video=is_video, is_book=is_book, has_subtitles=has_subtitles)
             db.session.add(media) # add new object to database
+            db_updated = True
+
+        else:
+            #check if subtitle files exist for existing media objects, in case they got removed or new ones uploaded
+            basename = os.path.splitext(filename)[0]
+            if any(basename == stb for stb in subtitle_basenames):
+                if not media.has_subtitles:
+                    media.has_subtitles = True
+                    db_updated = True
+            else:
+                if media.has_subtitles:
+                    media.has_subtitles = False
+                    db_updated = True
+                
+            
         media_list.append(media)
         
-    if new_media:
+    if db_updated:
         db.session.commit()
 
     # applying search filters
