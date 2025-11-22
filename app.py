@@ -141,7 +141,7 @@ def index(subpath):
             db.session.add(media) # add new object to database
             db_updated = True
 
-        else:
+        elif not filename.endswith(".mkv"):
             #check if subtitle files exist for existing media objects, in case they got removed or new ones uploaded
             basename = os.path.splitext(filename)[0]
             if any(basename == stb for stb in subtitle_basenames):
@@ -153,7 +153,6 @@ def index(subpath):
                     media.has_subtitles = False
                     db_updated = True
                 
-            
         media_list.append(media)
         
     if db_updated:
