@@ -76,6 +76,7 @@ class Media(db.Model):
     )
 
 class MediaProgress(db.Model):
+    # for returning users to where they left off if they revisit a video
     __tablename__ = "media_progress"
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), primary_key=True)
     media_id = db.Column(db.Integer, db.ForeignKey("media.media_id"), primary_key=True)
@@ -317,14 +318,11 @@ def progress(media_id):
     if request.method == "GET":
         row = MediaProgress.query.filter_by(user_id=user_id, media_id=media_id).first()
         pos = row.position_seconds if row else 0
-        print("found pos", pos)
         return jsonify({"position": pos})
     
     #POST    
     data = request.get_json() or {}
     pos = float(data.get("position", 0))
-    
-    print("saving pos", pos)
 
     row = MediaProgress.query.filter_by(user_id=user_id, media_id=media_id).first()
     if not row:

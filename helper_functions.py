@@ -13,12 +13,14 @@ def clean_filename(filename):
     return filename
 
 def load_watched(watched_file):
+    # legacy function
     if os.path.exists(watched_file):
         with open(watched_file, "r") as fp:
             return json.load(fp)
     return {}
 
 def save_watched(watched_movies, watched_file):
+    # legacy function
     with open(watched_file, "w") as fp:
         json.dump(watched_movies, fp, indent=4)
 
