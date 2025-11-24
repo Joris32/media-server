@@ -11,11 +11,11 @@ Run wsgi_launcher.py to run using Gunicorn (production mode).
 
 ## Features
 
-- EPUB reading using JSZip and epub.js
 - User registration and login
 - Users can mark content as watched, and filter by unwatched content
+- When logged in, server will keep track of progress within a video (users will be brought back to where they left off if they return to the video later)
+- EPUB reading using JSZip and epub.js
 - Admin accounts can use the page to upload files to media directory
-- SQLAlchemy database is used for user accounts and progress tracking
 
 ## Environment Variables
 
@@ -36,4 +36,8 @@ MEDIA_DIR=media
 
 # runs on localhost by default, change to your local Tailscale IP to access over Tailscale
 TAILSCALE_IP=127.0.0.1
+
+# by default server will send logs to stderr/stdout
+ACCESS_LOGFILE=logs/access.log
+ERROR_LOGFILE=logs/stderr.log
 ```
