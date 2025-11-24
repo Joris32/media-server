@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import re
 import os
 from dotenv import load_dotenv
+from functools import wraps
 
 # custom imports
 import convert
@@ -24,8 +25,8 @@ IP = os.getenv("TAILSCALE_IP", "127.0.0.1")
 WSGI_PORT = 8000 # port used when running wsgi_launcher.py
 DEV_PORT = 8080 # port used when running app.py directly
 
-ACCESS_LOGFILE = "logs/access.log"
-ERROR_LOGFILE = "logs/stderr.log" # print statements in app.py will end up here if gunicorn --capture-output is enabled
+ACCESS_LOGFILE = os.getenv("ACCESS_LOGFILE", "-")
+ERROR_LOGFILE = os.getenv("ERROR_LOGFILE", "-") # print statements in app.py will end up here if gunicorn --capture-output is enabled
 
 LOG_LOGIN_ATTEMPTS = True
 
@@ -53,7 +54,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
-    watched_media = db.relationship(
+    watched_media = db.relationship( # media marked as watched, for search filtering
         'Media',
         secondary=user_watched,
         back_populates='viewers'
@@ -62,7 +63,8 @@ class User(db.Model):
 class Media(db.Model):
     __tablename__ = 'media'
     media_id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(255), unique=True, nullable=False)
+    filename = db.Column(db.String(255), unique=False, nullable=False)
+    subpath = db.Column(db.String(255), unique=True, nullable=False) # path to file, from MEDIA_DIR
     is_video = db.Column(db.Boolean, default=False, nullable=False)
     is_book = db.Column(db.Boolean, default=False, nullable=False)
     has_subtitles = db.Column(db.Boolean, default=False, nullable=False)
@@ -73,6 +75,15 @@ class Media(db.Model):
         back_populates='watched_media'
     )
 
+class MediaProgress(db.Model):
+    __tablename__ = "media_progress"
+    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), primary_key=True)
+    media_id = db.Column(db.Integer, db.ForeignKey("media.media_id"), primary_key=True)
+    position_seconds = db.Column(db.Float, nullable=False, default=0)
+
+    user = db.relationship("User")
+    media = db.relationship("Media")
+
 with app.app_context():
     db.create_all()
     if not User.query.filter_by(username=admin_user).first():
@@ -81,11 +92,10 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
-
 def get_user():
-    username = session.get("username", None)
-    if username:
-        user = User.query.filter_by(username=username).first()
+    user_id = session.get("user_id", None)
+    if user_id:
+        user = User.query.filter_by(user_id=user_id).first()
         return user
     return None
 
@@ -96,6 +106,23 @@ def user_is_admin():
     if user.is_admin:
         return True
     return False
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user_id = session.get("user_id", None)
+        if not user_id:
+            abort(401)
+        return f(*args, **kwargs)
+    return wrapper
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not user_is_admin():
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapper
 
     
 @app.route('/', defaults={'subpath': ''})
@@ -124,7 +151,8 @@ def index(subpath):
     media_list = [] 
     db_updated = False
     for filename in media_filenames:
-        media = Media.query.filter_by(filename=filename).first()
+        media_subpath = os.path.join(subpath, filename)
+        media = Media.query.filter_by(subpath=media_subpath).first()
 
         # create object if it doesn't exist
         if not media:
@@ -137,7 +165,7 @@ def index(subpath):
             else:
                 has_subtitles = False
 
-            media = Media(filename=filename, is_video=is_video, is_book=is_book, has_subtitles=has_subtitles)
+            media = Media(filename=filename, is_video=is_video, is_book=is_book, has_subtitles=has_subtitles, subpath=media_subpath)
             db.session.add(media) # add new object to database
             db_updated = True
 
@@ -186,7 +214,7 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
-            session["username"] = username
+            session["user_id"] = user.user_id
             if LOG_LOGIN_ATTEMPTS:
                 print(f"login succesful; username '{username}', ip '{ip}'")
             return redirect(url_for("index"))
@@ -198,7 +226,7 @@ def login():
 
 @app.route("/logout")
 def logout():
-    session.pop("username", None)
+    session.pop("user_id", None)
     return redirect(url_for("index"))
     
 @app.route('/signup', methods=['GET', 'POST'])
@@ -229,7 +257,7 @@ def signup():
             )
         db.session.add(new_user)
         db.session.commit()
-        session["username"] = new_user.username
+        session["user_id"] = new_user.user_id
         return redirect(url_for("index"))
             
     return render_template("signup.html")
@@ -246,19 +274,23 @@ def play(subpath):
         book_name = os.path.splitext(subpath)[0]
         book_url = url_for('media', subpath=subpath)
         
-        return render_template(
-                "reader.html",
-                book_name=book_name,
-                book_url=book_url
-            )
-
+        return render_template("reader.html", book_name=book_name, book_url=book_url)
+        
     video_url = f"/media/{subpath}"
     subtitle_url, has_subtitles = get_subtitles(subpath, media_dir = MEDIA_DIR)
     movie_name = subpath.rsplit('.', 1)[0]
-    
-    return render_template("play.html", video_url=video_url, subtitle_url=subtitle_url, has_subtitles=has_subtitles, movie_name=movie_name)
+
+    media = Media.query.filter_by(subpath=subpath).first()
+    if not media:
+        abort(404)
+    media_id = media.media_id
+
+    user = get_user()
+    logged_in = True if user else False
+    return render_template("play.html", video_url=video_url, subtitle_url=subtitle_url, has_subtitles=has_subtitles, movie_name=movie_name, media_id=media_id, logged_in=logged_in)
 
 @app.route('/toggle_watched', methods=['POST'])
+@login_required
 def toggle_watched():
     data = request.json
     media_id = data.get("media_id")
@@ -278,43 +310,56 @@ def toggle_watched():
 
     return jsonify({"message": f"Toggled {media.filename} watched status", "watched": watched}), 200
 
-@app.route('/save_progress', methods=['POST'])
-def save_progress():
-    data = request.get_json()
-    video_id = data.get("video_id")
-    timestamp = data.get("timestamp")
+@app.route("/progress/<int:media_id>", methods=["GET", "POST"])
+@login_required
+def progress(media_id):
+    user_id = session.get("user_id")
+    if request.method == "GET":
+        row = MediaProgress.query.filter_by(user_id=user_id, media_id=media_id).first()
+        pos = row.position_seconds if row else 0
+        print("found pos", pos)
+        return jsonify({"position": pos})
+    
+    #POST    
+    data = request.get_json() or {}
+    pos = float(data.get("position", 0))
+    
+    print("saving pos", pos)
+
+    row = MediaProgress.query.filter_by(user_id=user_id, media_id=media_id).first()
+    if not row:
+        row = MediaProgress(user_id=user_id, media_id=media_id)
+        db.session.add(row)
+
+    row.position_seconds = pos
+    db.session.commit()
+
     return "", 204
 
-@app.route('/upload')
-def uploading():
-    if not user_is_admin():
-        abort(403)
-    return render_template('upload.html', allowed_extensions = ALLOWED_EXTENSIONS)
-
-@app.route('/upload', methods=['POST'])
-def upload_movie():
-    if not user_is_admin():
-        abort(403)
-        
-    if 'file' not in request.files:
-        return render_template('upload.html', msg = "Error: no file part")
-
-    file = request.files['file']
+@app.route('/upload', methods=['GET', 'POST'])
+@admin_required
+def upload():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return render_template('upload.html', msg = "Error: no file part")
     
-    if file.filename == '':
-        return render_template('upload.html', msg = "Error: no selected file")
-
-    if file and allowed_file(file.filename, allowed_extensions = ALLOWED_EXTENSIONS):
-        filename = clean_filename(file.filename)
-
-        filepath = os.path.join(MEDIA_DIR, filename)
-        if os.path.exists(filepath):
-            return render_template('upload.html', msg = f"Error: File '{filename}' already exists.", allowed_extensions = ALLOWED_EXTENSIONS)
-
-        file.save(os.path.join(MEDIA_DIR, filename))
-        return render_template('upload.html', msg =  f"File {filename} uploaded successfully.", allowed_extensions = ALLOWED_EXTENSIONS)
-
-    return render_template('upload.html', msg = f"Error: invalid file type", allowed_extensions = ALLOWED_EXTENSIONS)
+        file = request.files['file']
+        
+        if file.filename == '':
+            return render_template('upload.html', msg = "Error: no selected file")
+    
+        if file and allowed_file(file.filename, allowed_extensions = ALLOWED_EXTENSIONS):
+            filename = clean_filename(file.filename)
+    
+            filepath = os.path.join(MEDIA_DIR, filename)
+            if os.path.exists(filepath):
+                return render_template('upload.html', msg = f"Error: File '{filename}' already exists.", allowed_extensions = ALLOWED_EXTENSIONS)
+    
+            file.save(os.path.join(MEDIA_DIR, filename))
+            return render_template('upload.html', msg =  f"File {filename} uploaded successfully.", allowed_extensions = ALLOWED_EXTENSIONS)
+    
+        return render_template('upload.html', msg = f"Error: invalid file type", allowed_extensions = ALLOWED_EXTENSIONS)
+    return render_template('upload.html', allowed_extensions = ALLOWED_EXTENSIONS)
 
 @app.route('/media/<path:subpath>')
 def media(subpath):

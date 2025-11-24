@@ -19,5 +19,42 @@
         {% endif %}
     </video>
 </div>
+{% if logged_in %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const video = document.querySelector("video");
+    const mediaId = {{ media_id }};
+
+    // restore saved progress
+    fetch(`/progress/${mediaId}`)
+        .then(r => r.json())
+        .then(data => {
+            const pos = data.position || 0;
+            video.addEventListener("loadedmetadata", () => {
+                if (pos > 1 && pos < video.duration) {
+                    video.currentTime = pos;
+                }
+            });
+        });
+
+    let lastSent = 0;
+
+    // save progress
+    video.addEventListener("timeupdate", () => {
+        const t = video.currentTime;
+
+        // debounce (5s)
+        if (Math.abs(t - lastSent) < 5) return;
+        lastSent = t;
+
+        fetch(`/progress/${mediaId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ position: t })
+        });
+    });
+});
+</script>
+{% endif %}
 </body>
 </html>
