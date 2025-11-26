@@ -25,46 +25,44 @@ def save_watched(watched_movies, watched_file):
     with open(watched_file, "w") as fp:
         json.dump(watched_movies, fp, indent=4)
 
-def get_subtitles(subpath, media_dir, verbose = False) -> tuple[str, bool]:
+def get_subtitle_url(subpath, media_dir, verbose = False):
     # check if .vtt subtitles exist, if not check for .srt and convert to .vtt
     
     root = os.path.splitext(subpath)[0]
-    root = str(PurePosixPath(root)) # fix backslashes on Windows machines
+    url = str(PurePosixPath(root)) # fix backslashes on Windows machines
     
-    subtitle_url = f"/media/{root}.vtt"
+    subtitle_url = f"/media/{url}.vtt"
     subtitle_path = os.path.join(media_dir, f"{root}.vtt")
 
     if verbose:
         print("checking", subtitle_path)
     
-    has_subtitles = os.path.exists(subtitle_path)  
-
-    if has_subtitles:
+    if os.path.exists(subtitle_path):
         if verbose:
             print(".vtt subtitles found")
-            
-        return subtitle_url, True
+
+        return subtitle_url
         
     srt_path = os.path.join(media_dir, f"{root}.srt")
 
     if verbose:
         print("checking", srt_path)
 
-    if os.path.exists(srt_path):
+    if not os.path.exists(srt_path):
         if verbose:
-            print(".srt subtitles found")
-            
-        try:
-            convert.to_utf_8(srt_path, verbose = verbose)
-            convert.srt_to_vtt(srt_path, subtitle_path, verbose = verbose)
-            return subtitle_url, True
-            
-        except Exception as e:
-            if verbose:
-                print(".srt to .vtt conversion failed:", e)
-                print("subpath:", subpath)
-            return "", False
+            print("no subtitles found")
+        return ""
         
     if verbose:
-        print("no subtitles found")
-    return "", False 
+        print(".srt subtitles found")
+        
+    try:
+        convert.to_utf_8(srt_path, verbose = verbose)
+        convert.srt_to_vtt(srt_path, subtitle_path, verbose = verbose)
+        return subtitle_url
+        
+    except Exception as e:
+        if verbose:
+            print(".srt to .vtt conversion failed:", e)
+            print("subpath:", subpath)
+        return ""
