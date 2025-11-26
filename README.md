@@ -15,7 +15,7 @@ Media folder can contain subfolders to organize media, which are easy to travers
   docker-compose up --build -d
   ```
 
- 3. Navigate to http://media in a web browser from a device on your tailnet (or https://media.\<tailnet-name\>.ts.net if using https)
+ 3. Navigate to http://media in a web browser from a device on your tailnet (or https://media.<tailnet-name\>.ts.net if using https)
 
 ### Without Docker
 
