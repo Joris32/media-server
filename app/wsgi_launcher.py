@@ -1,3 +1,5 @@
+# run this file to run using Gunicorn but without Docker
+
 import app
 import os
 from pathlib import Path
@@ -23,6 +25,6 @@ os.execvp("gunicorn", [
     f"--access-logfile={access_logfile}",
     f"--error-logfile={error_logfile}",
     f"--capture-output",
-    "--timeout=120", 
+    "--timeout=120",  
     "app:app"
 ])

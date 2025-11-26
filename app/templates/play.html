@@ -12,11 +12,10 @@
 <body>
 <div style="max-width: 100%; height: auto; display: block; margin: 0 auto; position: relative;">
     <video style="width: 100%; height: auto; max-height: 100vh; object-fit: contain;" controls>
-        <source src="{{ video_url }}" type="video/mp4">
-        <source src="{{ video_url }}" type="video/x-matroska">
-        {% if has_subtitles %}
-            <track src="{{ subtitle_url }}" kind="subtitles" srclang="en" label="English" default>
-        {% endif %}
+    <source src="{{ video_url }}" type="video/mp4">
+    {% if has_subtitles %}
+        <track src="{{ subtitle_url }}" kind="subtitles" srclang="en" label="English" default>
+    {% endif %}
     </video>
 </div>
 {% if logged_in %}
@@ -35,6 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     video.currentTime = pos;
                 }
             });
+
+            if (video.readyState >= 1 && pos > 1 && pos < video.duration) {
+                video.currentTime = pos;
+            }
         });
 
     let lastSent = 0;
