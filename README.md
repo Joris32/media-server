@@ -1,6 +1,7 @@
 # Media Server
 
-Python media server using Docker, with a Flask + Gunicorn backend. Media served by nginx. Made to stream videos and .epub books to other devices over Tailscale.
+Python media server using Docker, with a Flask + Gunicorn backend, media served using nginx. 
+Made to stream videos and .epub books to other devices over Tailscale.
 Media should be in `media/` folder in project directory. 
 Media folder can contain subfolders to organize media, which are easy to traverse through the interface.
 
