@@ -1,9 +1,23 @@
 # Media Server
 
-Python media server using Flask and Gunicorn. Made to stream videos and .epub books to other devices over Tailscale. 
-Media directory can contain subfolders to organize media, which are easy to traverse through the interface.
+Python media server using Flask and Gunicorn. Made to stream videos and .epub books to other devices over Tailscale.
+Media should be in `media/` folder in project directory. 
+Media folder can contain subfolders to organize media, which are easy to traverse through the interface.
 
 ## Usage
+
+### Using Docker
+
+ 1. Install Docker if not already installed
+ 2. Build and run Docker containers
+
+  ```
+  docker-compose up --build -d
+  ```
+
+ 3. Navigate to http://media in a web browser from a device on your tailnet (or https://media.<tailnet-name>.ts.net if using https)
+
+### Without Docker
 
 Run app.py to run in debug / development mode.
 
@@ -15,11 +29,12 @@ Run wsgi_launcher.py to run using Gunicorn (production mode).
 - Users can mark content as watched, and filter by unwatched content
 - When logged in, server will keep track of progress within a video (users will be brought back to where they left off if they return to the video later)
 - EPUB reading using JSZip and epub.js
-- Admin accounts can use the page to upload files to media directory
+- Admin accounts can use the page to upload files to media folder
 
 ## Environment Variables
 
-Create a `.env` file in the project directory. Required keys:
+Create a `.env` file in the project directory. 
+Required keys:
 
 ```
 SECRET_KEY=<flask-secret-key>
@@ -29,15 +44,19 @@ ADMIN_USERNAME=<admin-username>
 ADMIN_PASSWORD=<admin-password>
 ```
 
-Optional keys:
+Required keys when using Docker:
 
 ```
-MEDIA_DIR=media
+TS_AUTHKEY=<ts-authkey>
+```
 
-# runs on localhost by default, change to your local Tailscale IP to access over Tailscale
-TAILSCALE_IP=127.0.0.1
+Optional keys (only relevant when not using Docker):
 
-# by default server will send logs to stderr/stdout
+```
+# runs on localhost by default
+TAILSCALE_IP=<tailscale-ip>
+
+# sends logs to stderr/stdout by default
 ACCESS_LOGFILE=logs/access.log
 ERROR_LOGFILE=logs/stderr.log
 ```
