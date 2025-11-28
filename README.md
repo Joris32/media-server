@@ -9,20 +9,27 @@ Media folder can contain subfolders to organize media, which are easy to travers
 
 ### Using Docker
 
- 1. Install Docker if not already installed
- 2. Build and run Docker containers
+ 1. Create `.env` file (see Environment Variables)
+ 2. Install Docker if not already installed
+ 3. Build and run Docker containers
 
   ```
   docker-compose up --build -d
   ```
 
- 3. Navigate to http://media in a web browser from a device on your tailnet (or https://media.<tailnet-name\>.ts.net if using https)
+ 4. Navigate to `http://media` in a web browser from a device on your Tailnet (or `https://media.<tailnet-name>.ts.net` if using https)
 
 ### Without Docker
 
-Run app.py to run in debug / development mode.
+ 1. Create `.env` file (see Environment Variables)
+ 2. Install dependencies
+    
+```
+pip install -r requirements.txt
+```
 
-Run wsgi_launcher.py to run using Gunicorn (production mode).
+ 3. Run `python app.py` to run in debug / development mode or run `python wsgi_launcher.py` to run using Gunicorn (production mode).
+ 4. Navigate to `http://localhost:8000` in a web browser (or, if using Tailscale, navigate to `http://<tailscale_ip>:8000` from a different device on your Tailnet)
 
 ## Features
 
