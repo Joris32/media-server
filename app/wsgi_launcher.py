@@ -1,13 +1,13 @@
 # run this file to run using Gunicorn but without Docker
 
-import app
+import config
 import os
 from pathlib import Path
 
-host = app.IP
-port = app.WSGI_PORT
-access_logfile = app.ACCESS_LOGFILE
-error_logfile = app.ERROR_LOGFILE
+host = config.IP
+port = config.WSGI_PORT
+access_logfile = config.ACCESS_LOGFILE
+error_logfile = config.ERROR_LOGFILE
 
 def ensure_file(path_str):
     if not path_str or path_str == "-":

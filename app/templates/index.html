@@ -55,6 +55,28 @@
             }
             window.location.search = params.toString();
         }
+        document.addEventListener("DOMContentLoaded", () => {
+          const overlay = document.querySelector(".popup-overlay");
+          const panel = overlay.querySelector(".popup-panel");
+          const trigger = document.querySelector(".popup-trigger");
+          const closeBtn = overlay.querySelector(".popup-close");
+        
+          trigger.addEventListener("click", () => {
+            overlay.classList.add("show");
+          });
+        
+          closeBtn.addEventListener("click", () => {
+            overlay.classList.remove("show");
+          });
+        
+          document.addEventListener("click", e => {
+            if (overlay.classList.contains("show") &&
+                !panel.contains(e.target) &&
+                e.target !== trigger) {
+              overlay.classList.remove("show");
+            }
+          });
+        });
     </script>
 </head>
 <body>
@@ -72,6 +94,14 @@
       {% endif %}
       {% if user and user.is_admin %}
         <a href="/upload" class="btn small">Upload</a>
+      {% else %}
+        <button class="btn small popup-trigger">Info</button>
+        <div class="popup-overlay">
+          <div class="popup-panel">
+            <p>{{ info_popup_text | safe }}</p>
+            <button class="popup-close">Close</button>
+          </div>
+        </div>
       {% endif %}
     </div>
 

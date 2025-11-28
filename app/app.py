@@ -12,24 +12,6 @@ from helper_functions import allowed_file, clean_filename, get_subtitle_url
 from database import db, User, Media, MediaProgress, user_watched, create_media_object
 from config import *
 
-# ------
-# for running without Docker (running app.py or wsgi_launcher.py directly):
-from dotenv import load_dotenv
-load_dotenv()
-
-# shared settings
-IP = os.getenv("TAILSCALE_IP", "127.0.0.1")
-
-# app.py settings
-DEV_PORT = 8080
-
-# wsgi_launcher.py settings
-WSGI_PORT = 8000
-ACCESS_LOGFILE = os.getenv("ACCESS_LOGFILE", "-")
-ERROR_LOGFILE = os.getenv("ERROR_LOGFILE", "-")
-# ------
-
-
 MEDIA_DIR = "../media"
 
 app = Flask(__name__)
@@ -159,7 +141,8 @@ def index(subpath):
                            watched_media=watched_media, 
                            show_unwatched=show_unwatched, 
                            show_mp4_only=show_mp4_only, 
-                           user=user)
+                           user=user,
+                           info_popup_text=INFO_POPUP_TEXT)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
